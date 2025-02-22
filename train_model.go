@@ -9,14 +9,14 @@ import (
 	"github.com/sajari/regression"
 )
 
-// Data structure
+// Data structure for training
 type EnergyData struct {
 	Population  float64 `json:"population"`
 	Temperature float64 `json:"temperature"`
 	EnergyKWh   float64 `json:"energy_kwh"`
 }
 
-// Training data in JSON format
+// Sample training data
 var jsonData = `[
 	{"population": 12670000, "temperature": 30, "energy_kwh": 2535},
 	{"population": 12670000, "temperature": 33, "energy_kwh": 977},
@@ -28,32 +28,43 @@ func main() {
 	var energyData []EnergyData
 	err := json.Unmarshal([]byte(jsonData), &energyData)
 	if err != nil {
-		log.Fatalf("Error parsing JSON: %v", err)
+		log.Fatalf("❌ Error parsing JSON: %v", err)
 	}
 
-	// Create a new regression model
+	// Create regression model
 	var r regression.Regression
 	r.SetObserved("EnergyKWh")
 	r.SetVar(0, "Population")
 	r.SetVar(1, "Temperature")
 
-	// Add training data
+	// Train model
 	for _, d := range energyData {
 		r.Train(regression.DataPoint(d.EnergyKWh, []float64{d.Population, d.Temperature}))
 	}
 
-	// Train the model
+	// Run regression
 	r.Run()
 
-	// Save model coefficients to a file
-	file, err := os.Create("model.json")
+	// Print model coefficients (for debugging)
+	fmt.Println("Model Coefficients:", r.Coeff)
+
+	// Save model coefficients
+	modelFile, err := os.Create("model.json")
 	if err != nil {
-		log.Fatalf("Failed to save model: %v", err)
+		log.Fatalf("❌ Failed to save model: %v", err)
 	}
-	defer file.Close()
+	defer modelFile.Close()
 
-	modelData, _ := json.Marshal(r.Coeff)
-	file.Write(modelData)
+	// Write JSON data properly
+	modelData, err := json.MarshalIndent(r.Coeff, "", "  ")
+	if err != nil {
+		log.Fatalf("❌ Failed to encode model data: %v", err)
+	}
 
-	fmt.Println("Model trained and saved to model.json")
+	_, err = modelFile.Write(modelData)
+	if err != nil {
+		log.Fatalf("❌ Failed to write to model.json: %v", err)
+	}
+
+	fmt.Println("✅ Model trained and saved as model.json")
 }
