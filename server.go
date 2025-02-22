@@ -45,12 +45,8 @@ func main() {
 	// Run regression
 	r.Run()
 
-	// Extract numeric coefficients (instead of function pointers)
-	coefficients := []float64{
-		r.Coeff(0), // Intercept
-		r.Coeff(1), // Population coefficient
-		r.Coeff(2), // Temperature coefficient
-	}
+	// Extract numeric coefficients
+	coefficients := r.GetCoeffs()
 
 	// Print model coefficients (for debugging)
 	fmt.Println("Model Coefficients:", coefficients)
