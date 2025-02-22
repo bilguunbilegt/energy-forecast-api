@@ -3,74 +3,75 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"math"
-	"net/http"
+	"log"
 	"os"
 
-	"github.com/gin-gonic/gin"
+	"github.com/sajari/regression"
 )
 
-// Structure for incoming JSON request
-type PredictionRequest struct {
+// Data structure for training
+type EnergyData struct {
 	Population  float64 `json:"population"`
 	Temperature float64 `json:"temperature"`
+	EnergyKWh   float64 `json:"energy_kwh"`
 }
 
-// Structure for response
-type PredictionResponse struct {
-	EnergyKWh float64 `json:"predicted_energy_kwh"`
-}
-
-// Load Model Coefficients
-func loadModel() ([]float64, error) {
-	file, err := os.ReadFile("model.json")
-	if err != nil {
-		return nil, err
-	}
-
-	var coeff []float64
-	err = json.Unmarshal(file, &coeff)
-	if err != nil {
-		return nil, err
-	}
-
-	return coeff, nil
-}
-
-// Prediction function
-func predictEnergy(population, temperature float64) (float64, error) {
-	coeff, err := loadModel()
-	if err != nil {
-		return 0, err
-	}
-
-	// Apply regression formula: Energy = b0 + (b1 * Population) + (b2 * Temperature)
-	prediction := coeff[0] + (coeff[1] * population) + (coeff[2] * temperature)
-
-	// Ensure non-negative prediction
-	return math.Max(prediction, 0), nil
-}
-
-func predictHandler(c *gin.Context) {
-	var req PredictionRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
-		return
-	}
-
-	energy, err := predictEnergy(req.Population, req.Temperature)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error in prediction"})
-		return
-	}
-
-	c.JSON(http.StatusOK, PredictionResponse{EnergyKWh: energy})
-}
+// Sample training data
+var jsonData = `[
+	{"population": 12670000, "temperature": 30, "energy_kwh": 2535},
+	{"population": 12670000, "temperature": 33, "energy_kwh": 977},
+	{"population": 12670000, "temperature": 45, "energy_kwh": 1754},
+	{"population": 12796700, "temperature": 30, "energy_kwh": 594}
+]`
 
 func main() {
-	router := gin.Default()
-	router.POST("/predict", predictHandler)
+	var energyData []EnergyData
+	err := json.Unmarshal([]byte(jsonData), &energyData)
+	if err != nil {
+		log.Fatalf("Error parsing JSON: %v", err)
+	}
 
-	fmt.Println("Server running on port 5000")
-	router.Run(":5000")
+	// Create regression model
+	var r regression.Regression
+	r.SetObserved("EnergyKWh")
+	r.SetVar(0, "Population")
+	r.SetVar(1, "Temperature")
+
+	// Train model
+	for _, d := range energyData {
+		r.Train(regression.DataPoint(d.EnergyKWh, []float64{d.Population, d.Temperature}))
+	}
+
+	// Run regression
+	r.Run()
+
+	// Extract numeric coefficients (instead of function pointers)
+	coefficients := []float64{
+		r.Coeff(0), // Intercept
+		r.Coeff(1), // Population coefficient
+		r.Coeff(2), // Temperature coefficient
+	}
+
+	// Print model coefficients (for debugging)
+	fmt.Println("Model Coefficients:", coefficients)
+
+	// Save model coefficients
+	modelFile, err := os.Create("model.json")
+	if err != nil {
+		log.Fatalf("Failed to save model: %v", err)
+	}
+	defer modelFile.Close()
+
+	// Write JSON data properly
+	modelData, err := json.MarshalIndent(coefficients, "", "  ")
+	if err != nil {
+		log.Fatalf("Failed to encode model data: %v", err)
+	}
+
+	_, err = modelFile.Write(modelData)
+	if err != nil {
+		log.Fatalf("Failed to write to model.json: %v", err)
+	}
+
+	fmt.Println("Model trained and saved as model.json")
 }
