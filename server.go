@@ -45,13 +45,13 @@ func main() {
 	// Run regression
 	r.Run()
 
-	// Extract numeric coefficients
-	coefficients := make([]float64, len(r.Coefficients))
-	for i, coeff := range r.Coefficients {
-		coefficients[i] = coeff.Value
+	// Extract coefficients properly
+	coefficients := make([]float64, len(r.Coeff))
+	for i := range coefficients {
+		coefficients[i] = r.Coeff(i) // This extracts numeric values instead of function references
 	}
 
-	// Print model coefficients (for debugging)
+	// Print model coefficients for debugging
 	fmt.Println("Model Coefficients:", coefficients)
 
 	// Save model coefficients
