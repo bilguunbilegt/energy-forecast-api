@@ -28,7 +28,7 @@ func main() {
 	var energyData []EnergyData
 	err := json.Unmarshal([]byte(jsonData), &energyData)
 	if err != nil {
-		log.Fatalf("❌ Error parsing JSON: %v", err)
+		log.Fatalf("Error parsing JSON: %v", err)
 	}
 
 	// Create regression model
@@ -51,20 +51,20 @@ func main() {
 	// Save model coefficients
 	modelFile, err := os.Create("model.json")
 	if err != nil {
-		log.Fatalf("❌ Failed to save model: %v", err)
+		log.Fatalf("Failed to save model: %v", err)
 	}
 	defer modelFile.Close()
 
 	// Write JSON data properly
 	modelData, err := json.MarshalIndent(r.Coeff, "", "  ")
 	if err != nil {
-		log.Fatalf("❌ Failed to encode model data: %v", err)
+		log.Fatalf("Failed to encode model data: %v", err)
 	}
 
 	_, err = modelFile.Write(modelData)
 	if err != nil {
-		log.Fatalf("❌ Failed to write to model.json: %v", err)
+		log.Fatalf("Failed to write to model.json: %v", err)
 	}
 
-	fmt.Println("✅ Model trained and saved as model.json")
+	fmt.Println("Model trained and saved as model.json")
 }
