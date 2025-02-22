@@ -45,8 +45,14 @@ func main() {
 	// Run regression
 	r.Run()
 
-	// Print model coefficients (for debugging)
-	fmt.Println("Model Coefficients:", r.Coeff)
+	// Extract numeric coefficients
+	var coefficients []float64
+	for _, coeff := range r.Coefficients {
+		coefficients = append(coefficients, coeff.Value)
+	}
+
+	// Print model coefficients for debugging
+	fmt.Println("Model Coefficients:", coefficients)
 
 	// Save model coefficients
 	modelFile, err := os.Create("model.json")
@@ -56,7 +62,7 @@ func main() {
 	defer modelFile.Close()
 
 	// Write JSON data properly
-	modelData, err := json.MarshalIndent(r.Coeff, "", "  ")
+	modelData, err := json.MarshalIndent(coefficients, "", "  ")
 	if err != nil {
 		log.Fatalf("Failed to encode model data: %v", err)
 	}
