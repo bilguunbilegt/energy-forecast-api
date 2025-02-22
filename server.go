@@ -46,7 +46,10 @@ func main() {
 	r.Run()
 
 	// Extract numeric coefficients
-	coefficients := r.GetCoeffs()
+	coefficients := make([]float64, len(r.Coefficients))
+	for i, coeff := range r.Coefficients {
+		coefficients[i] = coeff.Value
+	}
 
 	// Print model coefficients (for debugging)
 	fmt.Println("Model Coefficients:", coefficients)
