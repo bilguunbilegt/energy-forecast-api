@@ -45,11 +45,8 @@ func main() {
 	// Run regression
 	r.Run()
 
-	// Extract numeric coefficients
-	var coefficients []float64
-	for _, coeff := range r.Coefficients {
-		coefficients = append(coefficients, coeff.Value)
-	}
+	// Extract numeric coefficients using GetCoeffs()
+	coefficients := r.GetCoeffs()
 
 	// Print model coefficients for debugging
 	fmt.Println("Model Coefficients:", coefficients)
