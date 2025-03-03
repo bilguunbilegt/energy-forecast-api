@@ -1,73 +1,117 @@
 package main
 
 import (
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/sajari/regression"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
 )
 
-// Data structure for training
+// EnergyData represents a single row of the dataset
 type EnergyData struct {
-	Population  float64 `json:"population"`
-	Temperature float64 `json:"temperature"`
-	EnergyKWh   float64 `json:"energy_kwh"`
+	Population  float64
+	Temperature float64
+	EnergyKWh   float64
 }
 
-// Sample training data
-var jsonData = `[
-	{"population": 12670000, "temperature": 30, "energy_kwh": 2535},
-	{"population": 12670000, "temperature": 33, "energy_kwh": 977},
-	{"population": 12670000, "temperature": 45, "energy_kwh": 1754},
-	{"population": 12796700, "temperature": 30, "energy_kwh": 594}
-]`
+const (
+	bucketName = "sage-bilguun"
+	objectKey  = "train/energy_test_illinois.csv"
+)
 
 func main() {
-	var energyData []EnergyData
-	err := json.Unmarshal([]byte(jsonData), &energyData)
+	// Download dataset from S3
+	data, err := downloadFromS3(bucketName, objectKey)
 	if err != nil {
-		log.Fatalf("Error parsing JSON: %v", err)
+		log.Fatalf("Failed to download file from S3: %v", err)
 	}
 
-	// Create regression model
+	// Parse CSV data
+	energyData, err := parseCSVData(data)
+	if err != nil {
+		log.Fatalf("Failed to parse CSV: %v", err)
+	}
+
+	// Train regression model
+	model := trainModel(energyData)
+
+	// Save trained model coefficients
+	saveModel(model)
+
+	fmt.Println("Model trained and saved successfully.")
+}
+
+func downloadFromS3(bucket, key string) ([]byte, error) {
+	sess := session.Must(session.NewSession(&aws.Config{
+		Region: aws.String("us-east-1"),
+	}))
+
+	svc := s3.New(sess)
+	obj, err := svc.GetObject(&s3.GetObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := os.ReadAll(obj.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+func parseCSVData(data []byte) ([]EnergyData, error) {
+	reader := csv.NewReader(string.NewReader(string(data)))
+	records, err := reader.ReadAll()
+	if err != nil {
+		return nil, err
+	}
+
+	var energyData []EnergyData
+	for i, record := range records {
+		if i == 0 { // Skip header row
+			continue
+		}
+		energyKWh, _ := strconv.ParseFloat(record[2], 64)
+		population, _ := strconv.ParseFloat(record[3], 64)
+		temperature, _ := strconv.ParseFloat(record[4], 64)
+		energyData = append(energyData, EnergyData{population, temperature, energyKWh})
+	}
+	return energyData, nil
+}
+
+func trainModel(data []EnergyData) *regression.Regression {
 	var r regression.Regression
 	r.SetObserved("EnergyKWh")
 	r.SetVar(0, "Population")
 	r.SetVar(1, "Temperature")
 
-	// Train model
-	for _, d := range energyData {
+	for _, d := range data {
 		r.Train(regression.DataPoint(d.EnergyKWh, []float64{d.Population, d.Temperature}))
 	}
-
-	// Run regression
+	
 	r.Run()
+	return &r
+}
 
-	// Extract numeric coefficients using GetCoeffs()
-	coefficients := r.GetCoeffs()
-
-	// Print model coefficients for debugging
-	fmt.Println("Model Coefficients:", coefficients)
-
-	// Save model coefficients
-	modelFile, err := os.Create("model.json")
-	if err != nil {
-		log.Fatalf("Failed to save model: %v", err)
-	}
-	defer modelFile.Close()
-
-	// Write JSON data properly
+func saveModel(model *regression.Regression) {
+	coefficients := model.GetCoeffs()
 	modelData, err := json.MarshalIndent(coefficients, "", "  ")
 	if err != nil {
 		log.Fatalf("Failed to encode model data: %v", err)
 	}
 
-	_, err = modelFile.Write(modelData)
-	if err != nil {
-		log.Fatalf("Failed to write to model.json: %v", err)
+	if err := os.WriteFile("model.json", modelData, 0644); err != nil {
+		log.Fatalf("Failed to save model: %v", err)
 	}
-
-	fmt.Println("Model trained and saved as model.json")
 }
