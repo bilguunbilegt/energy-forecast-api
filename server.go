@@ -36,7 +36,6 @@ func loadModel() ([]float64, error) {
 		return nil, err
 	}
 
-	// Check if coefficients are valid
 	if len(coeff) < 3 {
 		log.Println("Invalid model coefficients: Model is not trained properly")
 		return nil, fmt.Errorf("invalid model coefficients")
@@ -45,20 +44,19 @@ func loadModel() ([]float64, error) {
 	return coeff, nil
 }
 
-// Compute Energy Consumption Prediction Manually
+// Compute Energy Consumption Prediction
 func predictEnergy(population, temperature float64) (float64, error) {
 	coeff, err := loadModel()
 	if err != nil {
 		return 0, err
 	}
 
-	// Apply regression formula: Energy = b0 + (b1 * Population) + (b2 * Temperature)
+	// Energy = b0 + (b1 * Population) + (b2 * Temperature)
 	prediction := coeff[0] + (coeff[1] * population) + (coeff[2] * temperature)
 
-	// Ensure non-negative predictions
 	if prediction < 0 {
 		log.Printf("Warning: Negative prediction (%f). Setting to 100.\n", prediction)
-		prediction = 100 // Set a minimum threshold instead of forcing 0.
+		prediction = 100
 	}
 
 	return prediction, nil
