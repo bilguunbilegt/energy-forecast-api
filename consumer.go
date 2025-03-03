@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	kafkaBroker = "kafka:9092"  // ✅ Fixed to work inside Docker Compose
+	kafkaBroker = "kafka:9092"  
 	kafkaTopic  = "energy-predictions"
 )
 
@@ -24,21 +24,21 @@ func consumeFromKafka() {
 		Brokers:     []string{kafkaBroker},
 		Topic:       kafkaTopic,
 		GroupID:     "energy-consumer",
-		StartOffset: kafka.FirstOffset,  // ✅ Ensures old messages are read
+		StartOffset: kafka.FirstOffset,  
 	})
 
-	fmt.Println("🟢 Kafka Consumer is running...")
+	fmt.Println("Kafka Consumer is running...")
 
 	for {
 		msg, err := reader.ReadMessage(context.Background())
 		if err != nil {
-			log.Println("❌ Error reading message:", err)
+			log.Println("Error reading message:", err)
 			continue
 		}
 
 		var request PredictionRequest
 		if err := json.Unmarshal(msg.Value, &request); err != nil {
-			log.Println("❌ Error decoding JSON:", err)
+			log.Println("Error decoding JSON:", err)
 			continue
 		}
 
