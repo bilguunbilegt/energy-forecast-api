@@ -18,7 +18,7 @@ services:
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
 
-  energy-forecast-api:  # Make sure this service is defined
+  energy-forecast-api:
     build: .
     ports:
       - "5000:5000"
@@ -26,3 +26,11 @@ services:
       - kafka
     environment:
       - AWS_REGION=us-east-1
+
+  consumer:  # ✅ Add this section to run the consumer inside Docker
+    build: .
+    command: ["go", "run", "consumer.go"]
+    depends_on:
+      - kafka
+    environment:
+      - KAFKA_BROKER=kafka:9092  # Use internal Docker network
