@@ -14,7 +14,7 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
 
@@ -27,10 +27,10 @@ services:
     environment:
       - AWS_REGION=us-east-1
 
-  consumer:  # ✅ Add this section to run the consumer inside Docker
+  consumer:
     build: .
     command: ["go", "run", "consumer.go"]
     depends_on:
       - kafka
     environment:
-      - KAFKA_BROKER=kafka:9092  # Use internal Docker network
+      - KAFKA_BROKER=kafka:9092
