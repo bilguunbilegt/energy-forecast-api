@@ -11,33 +11,30 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-// Define Kafka topic and broker
 const (
-	kafkaBroker = "localhost:9092" // Change to your EC2 or AWS MSK address
+	kafkaBroker = "kafka:9092"  // ✅ Fixed to work inside Docker Compose
 	kafkaTopic  = "energy-predictions"
 )
 
-// Struct for prediction request
 type PredictionRequest struct {
 	Population  float64 `json:"population"`
 	Temperature float64 `json:"temperature"`
 }
 
-// Kafka Producer Function
+// Kafka Producer
 func sendToKafka(data PredictionRequest) error {
-	// Create a Kafka writer
 	writer := kafka.NewWriter(kafka.WriterConfig{
 		Brokers: []string{kafkaBroker},
 		Topic:   kafkaTopic,
 	})
 
-	// Encode message
 	msg, err := json.Marshal(data)
 	if err != nil {
 		return err
 	}
 
-	// Send message
+	log.Println("📤 Sending message to Kafka:", string(msg))  // ✅ Added logging
+
 	err = writer.WriteMessages(context.Background(),
 		kafka.Message{Value: msg},
 	)
@@ -54,7 +51,6 @@ func predictHandler(c *gin.Context) {
 		return
 	}
 
-	// Send data to Kafka
 	err := sendToKafka(request)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send data to Kafka"})
@@ -67,6 +63,6 @@ func predictHandler(c *gin.Context) {
 func main() {
 	router := gin.Default()
 	router.POST("/predict", predictHandler)
-	fmt.Println("API Server running on 5000")
+	fmt.Println("API Server running on port 5000")
 	router.Run("0.0.0.0:5000")
 }
