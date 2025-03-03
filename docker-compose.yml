@@ -16,5 +16,13 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
-      KAFKA_LOG_RETENTION_HOURS: 168
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+  energy-forecast-api:  # Make sure this service is defined
+    build: .
+    ports:
+      - "5000:5000"
+    depends_on:
+      - kafka
+    environment:
+      - AWS_REGION=us-east-1
