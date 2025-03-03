@@ -7,6 +7,8 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
+	"io"
 
 	"github.com/sajari/regression"
 	"github.com/aws/aws-sdk-go/aws"
@@ -62,7 +64,7 @@ func downloadFromS3(bucket, key string) ([]byte, error) {
 		return nil, err
 	}
 
-	data, err := os.ReadAll(obj.Body)
+	data, err := io.ReadAll(obj.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +73,7 @@ func downloadFromS3(bucket, key string) ([]byte, error) {
 }
 
 func parseCSVData(data []byte) ([]EnergyData, error) {
-	reader := csv.NewReader(string.NewReader(string(data)))
+	reader := csv.NewReader(strings.NewReader(string(data)))
 	records, err := reader.ReadAll()
 	if err != nil {
 		return nil, err
