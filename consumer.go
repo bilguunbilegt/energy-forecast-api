@@ -11,7 +11,7 @@ import (
 
 // Define Kafka topic and broker
 const (
-	kafkaBroker = "localhost:9092"
+	kafkaBroker = "kafka:9092"
 	kafkaTopic  = "energy-predictions"
 )
 
