@@ -1,26 +1,13 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-// Request structure
-type PredictionRequest struct {
-	Population  float64 `json:"population"`
-	Temperature float64 `json:"temperature"`
-}
-
-// Response structure
-type PredictionResponse struct {
-	EnergyKWh float64 `json:"predicted_energy_kwh"`
-}
-
-// Prediction API Handler
+// Predict energy consumption based on population & temperature
 func predictHandler(c *gin.Context) {
 	var request PredictionRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
@@ -28,7 +15,7 @@ func predictHandler(c *gin.Context) {
 		return
 	}
 
-	// Directly call predictEnergy (no Kafka)
+	// Call predictEnergy function
 	energy, err := predictEnergy(request.Population, request.Temperature)
 	if err != nil {
 		log.Printf("Prediction Error: %v", err)
@@ -37,11 +24,4 @@ func predictHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, PredictionResponse{EnergyKWh: energy})
-}
-
-func main() {
-	router := gin.Default()
-	router.POST("/predict", predictHandler)
-	fmt.Println("API Server running on port 5000")
-	router.Run("0.0.0.0:5000")
 }
