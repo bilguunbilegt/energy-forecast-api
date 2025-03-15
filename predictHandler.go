@@ -1,46 +1,23 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/segmentio/kafka-go"
 )
 
-const (
-	kafkaBroker = "kafka:9092"  // ✅ Fixed to work inside Docker Compose
-	kafkaTopic  = "energy-predictions"
-)
-
+// Request structure
 type PredictionRequest struct {
 	Population  float64 `json:"population"`
 	Temperature float64 `json:"temperature"`
 }
 
-// Kafka Producer
-func sendToKafka(data PredictionRequest) error {
-	writer := kafka.NewWriter(kafka.WriterConfig{
-		Brokers: []string{kafkaBroker},
-		Topic:   kafkaTopic,
-	})
-
-	msg, err := json.Marshal(data)
-	if err != nil {
-		return err
-	}
-
-	log.Println("📤 Sending message to Kafka:", string(msg))  // ✅ Added logging
-
-	err = writer.WriteMessages(context.Background(),
-		kafka.Message{Value: msg},
-	)
-
-	writer.Close()
-	return err
+// Response structure
+type PredictionResponse struct {
+	EnergyKWh float64 `json:"predicted_energy_kwh"`
 }
 
 // Prediction API Handler
@@ -51,13 +28,15 @@ func predictHandler(c *gin.Context) {
 		return
 	}
 
-	err := sendToKafka(request)
+	// Directly call predictEnergy (no Kafka)
+	energy, err := predictEnergy(request.Population, request.Temperature)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send data to Kafka"})
+		log.Printf("Prediction Error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate prediction"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Prediction request sent to Kafka"})
+	c.JSON(http.StatusOK, PredictionResponse{EnergyKWh: energy})
 }
 
 func main() {
