@@ -3,10 +3,15 @@
 The Smart Energy Forecast API is a cloud-native application designed to predict future energy demand and provides actionable insights for optimizing infrastructure planning. By leveraging machine learning and cloud technologies, the platform enables energy providers, city planners, and policymakers to make data-driven decisions, improving efficiency and sustainability in energy distribution.
 
 ## **Key Features**
+
 **Accurate Energy Demand Forecasting** – Uses machine learning models to predict short-term and long-term energy consumption.
+
 **Scenario Analysis** – Allows planners to simulate different infrastructure scenarios and assess their impact on energy distribution.
+
 **Actionable Recommendations** – Provides insights to optimize energy grid operations and infrastructure investments.
+
 **Scalable Cloud Deployment** – Hosted on AWS, ensuring high availability and performance.
+
 **Dashboard & Visualization** – Enables stakeholders to explore forecasts through an intuitive front-end interface.
 
 ## **Advantages of the Application**
