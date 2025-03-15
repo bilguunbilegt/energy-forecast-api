@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Predict energy consumption based on population & temperature
+// Predict Handler (Calls predictEnergy from server.go)
 func predictHandler(c *gin.Context) {
 	var request PredictionRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
@@ -15,7 +15,7 @@ func predictHandler(c *gin.Context) {
 		return
 	}
 
-	// Call predictEnergy function
+	// Call predictEnergy function from server.go
 	energy, err := predictEnergy(request.Population, request.Temperature)
 	if err != nil {
 		log.Printf("Prediction Error: %v", err)
