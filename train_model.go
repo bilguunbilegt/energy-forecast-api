@@ -4,11 +4,11 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strconv"
 	"strings"
-	"io"
 
 	"github.com/sajari/regression"
 	"github.com/aws/aws-sdk-go/aws"
@@ -16,13 +16,14 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
-// EnergyData represents a single row of the dataset
+// EnergyData represents a dataset row
 type EnergyData struct {
 	Population  float64
 	Temperature float64
 	EnergyKWh   float64
 }
 
+// S3 bucket configuration
 const (
 	bucketName = "sage-bilguun"
 	objectKey  = "train/energy_test_illinois.csv"
@@ -101,7 +102,7 @@ func trainModel(data []EnergyData) *regression.Regression {
 	for _, d := range data {
 		r.Train(regression.DataPoint(d.EnergyKWh, []float64{d.Population, d.Temperature}))
 	}
-	
+
 	r.Run()
 	return &r
 }
