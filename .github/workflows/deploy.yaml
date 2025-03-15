@@ -23,8 +23,8 @@ jobs:
             echo "🔗 Connected to EC2!"
             cd ~/energy-forecast-api || git clone https://github.com/bilguunbilegt/energy-forecast-api.git && cd energy-forecast-api
             git pull origin main
-            docker build -t myrepo/energy-forecast-api:latest .
+            docker build -t bilguunbyam/energy-forecast-api:latest .
             docker stop energy-api || true
             docker rm energy-api || true
-            docker run -d --name energy-api -p 5000:5000 myrepo/energy-forecast-api:latest
+            docker run -d --name energy-api -p 5000:5000 bilguunbyam/energy-forecast-api:latest
             echo "🚀 Deployment Successful!"
